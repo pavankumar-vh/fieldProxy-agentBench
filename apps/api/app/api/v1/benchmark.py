@@ -28,6 +28,12 @@ def start_benchmark(req: BenchmarkRunRequest, db: Session = Depends(get_db)):
             status_code=422,
             detail=f"benchmark_type must be one of {sorted(VALID_TYPES)}",
         )
+    if req.compare_against and req.compare_against == agent_version.version:
+        raise HTTPException(
+            status_code=422,
+            detail="compare_against must differ from the benchmarked version "
+            "— a version cannot regress against itself",
+        )
 
     run = BenchmarkRun(
         id=new_id("run"),

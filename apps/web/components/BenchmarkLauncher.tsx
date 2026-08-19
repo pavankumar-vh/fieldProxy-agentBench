@@ -23,10 +23,14 @@ export default function BenchmarkLauncher() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // "none" first, then every version that actually exists in the registry.
+  const selectedAgent = agents.find((a) => a.id === agentId);
+
+  // Never offer the selected agent's own version as a baseline.
   const compareVersions = [
     "none",
-    ...Array.from(new Set(agents.map((a) => a.version))),
+    ...Array.from(new Set(agents.map((a) => a.version))).filter(
+      (v) => v !== selectedAgent?.version
+    ),
   ];
 
   useEffect(() => {
@@ -36,13 +40,21 @@ export default function BenchmarkLauncher() {
         const active = list.find((a) => a.status === "active");
         const selected = active ?? list[0];
         setAgentId(selected?.id ?? "");
-        // Default the comparison to the newest other version, if one exists.
+        // Default the comparison to the newest *different* version, if one exists.
         const other = list.find((a) => a.version !== selected?.version);
         setCompareAgainst(other?.version ?? "none");
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load agents"))
       .finally(() => setAgentsLoading(false));
   }, []);
+
+  // If the agent changed and the current comparison is now its own version,
+  // fall back to "none" instead of comparing the version against itself.
+  useEffect(() => {
+    if (selectedAgent && compareAgainst === selectedAgent.version) {
+      setCompareAgainst("none");
+    }
+  }, [agentId, agents, compareAgainst, selectedAgent]);
 
   async function handleRun() {
     setLoading(true);

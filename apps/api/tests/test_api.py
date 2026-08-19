@@ -102,3 +102,12 @@ def test_invalid_benchmark_type_rejected(client):
         json={"agent_version_id": "av_001", "benchmark_type": "bogus"},
     )
     assert res.status_code == 422
+
+
+def test_self_comparison_rejected(client):
+    """A version cannot regress against itself."""
+    res = client.post(
+        "/benchmark/run",
+        json={"agent_version_id": "av_001", "compare_against": "v1.2"},
+    )
+    assert res.status_code == 422

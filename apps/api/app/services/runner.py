@@ -174,6 +174,9 @@ def _latest_completed_run(db: Session, agent_name: str, version: str) -> Benchma
 def build_regression_report(db: Session, run: BenchmarkRun) -> RegressionReport | None:
     """Compare this run against the latest completed baseline-version run."""
     current_version = db.get(AgentVersion, run.agent_version_id)
+    # Safety net: a version can never be its own baseline.
+    if run.compare_against == current_version.version:
+        return None
     baseline_run = _latest_completed_run(
         db, current_version.name, run.compare_against
     )
