@@ -1,5 +1,5 @@
-import { getRunDetail } from "@/lib/api";
-import { formatPercent, formatDateTime, formatLatency, formatDuration, severityColor } from "@/lib/utils";
+import { getRunDetail, ApiError } from "@/lib/api";
+import { formatPercent, formatDateTime, formatLatency, formatDuration, severityColor, statusBadge } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -25,23 +25,45 @@ export default async function RunDetailPage({
   const { id } = await params;
 
   let run;
+  let loadError: unknown = null;
   try {
     run = await getRunDetail(id);
-  } catch {
+  } catch (e) {
+    loadError = e;
+  }
+
+  if (!run) {
+    const notFound = loadError instanceof ApiError && loadError.status === 404;
+    const message =
+      loadError instanceof Error ? loadError.message : "UNKNOWN ERROR";
     return (
       <div className="page">
         <div
           className="card-red"
-          style={{ maxWidth: "480px", marginTop: "4rem" }}
+          style={{ maxWidth: "560px", marginTop: "4rem" }}
         >
           <p className="label-mono" style={{ color: "rgba(255,255,255,0.7)", marginBottom: "0.5rem" }}>
-            ERROR
+            {notFound ? "404 NOT FOUND" : "ERROR"}
           </p>
           <h1 style={{ color: "var(--white)", fontSize: "1.5rem", marginBottom: "0.5rem" }}>
-            RUN NOT FOUND
+            {notFound ? "RUN NOT FOUND" : "FAILED TO LOAD RUN"}
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.8)", marginBottom: "1.5rem" }}>
-            Run ID <code style={{ fontFamily: "monospace" }}>{id}</code> does not exist.
+          <p
+            style={{
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: "1.5rem",
+              fontFamily: "var(--font-space-mono), monospace",
+              fontSize: "0.8rem",
+              wordBreak: "break-word",
+            }}
+          >
+            {notFound ? (
+              <>
+                Run ID <code>{id}</code> does not exist.
+              </>
+            ) : (
+              message
+            )}
           </p>
           <Link href="/runs" className="btn btn-white btn-sm">
             ← BACK TO RUNS
@@ -87,14 +109,12 @@ export default async function RunDetailPage({
           <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.5rem", textTransform: "uppercase" }}>
             {run.agent_name} {run.agent_version}
           </h1>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: "0.75rem", color: "var(--gray-300)" }}>
+          <p style={{ fontFamily: "var(--font-space-mono), monospace", fontSize: "0.75rem", color: "var(--gray-300)" }}>
             {id} &nbsp;·&nbsp; {formatDateTime(run.started_at)}
             {run.completed_at && ` → ${formatDateTime(run.completed_at)}`}
           </p>
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
-            <span
-              className={`badge ${run.status === "completed" ? "badge-pass" : run.status === "failed" ? "badge-fail" : "badge-info"}`}
-            >
+            <span className={`badge ${statusBadge(run.status)}`}>
               {run.status.toUpperCase()}
             </span>
             {run.mutation_testing && <span className="badge badge-pink">MUTATION TESTING</span>}
@@ -107,7 +127,7 @@ export default async function RunDetailPage({
         <div style={{ textAlign: "right" }}>
           <div
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-space-mono), monospace",
               fontSize: "3.5rem",
               fontWeight: 700,
               color: passColor,
@@ -117,7 +137,7 @@ export default async function RunDetailPage({
             {formatPercent(run.pass_rate)}
           </div>
           <div className="label-mono" style={{ color: "var(--gray-300)" }}>PASS RATE</div>
-          <div style={{ marginTop: "0.5rem", fontFamily: "'Space Mono', monospace", fontSize: "0.8rem", color: "var(--gray-300)" }}>
+          <div style={{ marginTop: "0.5rem", fontFamily: "var(--font-space-mono), monospace", fontSize: "0.8rem", color: "var(--gray-300)" }}>
             {run.passed}/{run.total_tests} &nbsp;·&nbsp; {formatDuration(run.duration_ms)}
           </div>
         </div>
@@ -151,7 +171,7 @@ export default async function RunDetailPage({
           </p>
           <p
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-space-mono), monospace",
               fontSize: "0.85rem",
               lineHeight: 1.6,
               color: "var(--black)",
@@ -166,7 +186,7 @@ export default async function RunDetailPage({
       <div style={{ marginBottom: "2rem" }}>
         <div className="section-header">
           <span className="section-num">01</span>
-          <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+          <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
             EXECUTION PIPELINE
           </h2>
           <span className="label-mono" style={{ marginLeft: "auto", color: "var(--gray-500)" }}>
@@ -194,7 +214,7 @@ export default async function RunDetailPage({
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
-                  fontFamily: "'Space Mono', monospace",
+                  fontFamily: "var(--font-space-mono), monospace",
                   fontSize: "0.7rem",
                   fontWeight: 700,
                 }}
@@ -204,7 +224,7 @@ export default async function RunDetailPage({
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
                   <span style={{ fontSize: "1rem" }}>{STEP_ICONS[step.type] ?? "◆"}</span>
-                  <span style={{ fontWeight: 700, fontFamily: "'Space Mono', monospace", fontSize: "0.85rem" }}>
+                  <span style={{ fontWeight: 700, fontFamily: "var(--font-space-mono), monospace", fontSize: "0.85rem" }}>
                     {step.name}
                   </span>
                   {step.latency_ms && (
@@ -220,7 +240,7 @@ export default async function RunDetailPage({
                       border: "1.5px solid var(--gray-200)",
                       padding: "0.75rem",
                       fontSize: "0.72rem",
-                      fontFamily: "'Space Mono', monospace",
+                      fontFamily: "var(--font-space-mono), monospace",
                       overflowX: "auto",
                       marginTop: "0.4rem",
                       color: "var(--gray-700)",
@@ -233,7 +253,7 @@ export default async function RunDetailPage({
                   <div
                     style={{
                       color: "var(--red)",
-                      fontFamily: "'Space Mono', monospace",
+                      fontFamily: "var(--font-space-mono), monospace",
                       fontSize: "0.75rem",
                       marginTop: "0.4rem",
                     }}
@@ -251,7 +271,7 @@ export default async function RunDetailPage({
       <div style={{ marginBottom: "2rem" }}>
         <div className="section-header">
           <span className="section-num">02</span>
-          <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+          <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
             DETERMINISTIC EVALUATION
           </h2>
           <span className="label-mono" style={{ marginLeft: "auto", color: "var(--gray-500)" }}>
@@ -304,14 +324,14 @@ export default async function RunDetailPage({
         <div style={{ marginBottom: "2rem" }}>
           <div className="section-header">
             <span className="section-num">03</span>
-            <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+            <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
               AGENT DECISION
             </h2>
           </div>
           <div className="card" style={{ background: "var(--black)", color: "var(--cream)" }}>
             <pre
               style={{
-                fontFamily: "'Space Mono', monospace",
+                fontFamily: "var(--font-space-mono), monospace",
                 fontSize: "0.85rem",
                 lineHeight: 1.7,
                 color: "var(--green)",

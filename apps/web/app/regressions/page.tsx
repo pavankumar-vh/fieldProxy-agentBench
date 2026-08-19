@@ -2,6 +2,7 @@ import { getRegressions } from "@/lib/api";
 import { formatPercent, formatDateTime } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata: Metadata = {
   title: "Regressions — Fieldproxy AgentBench",
@@ -28,7 +29,13 @@ export default async function RegressionsPage() {
         pass rates, surfaces new failures, and highlights critical regressions.
       </p>
 
-      {reports.map((report) => {
+      {reports.length === 0 ? (
+        <EmptyState
+          title="NO REGRESSIONS"
+          message="NO REGRESSION REPORTS YET — RUN A BENCHMARK WITH A BASELINE TO GENERATE ONE."
+        />
+      ) : (
+        reports.map((report) => {
         const regressed = report.regression_detected;
         const deltaAbs = Math.abs(report.delta);
 
@@ -54,13 +61,13 @@ export default async function RegressionsPage() {
                   <div style={{ fontWeight: 700, fontSize: "1.25rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     REGRESSION DETECTED
                   </div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "0.75rem", marginTop: "0.2rem", opacity: 0.85 }}>
+                  <div style={{ fontFamily: "var(--font-space-mono), monospace", fontSize: "0.75rem", marginTop: "0.2rem", opacity: 0.85 }}>
                     {report.agent_name} — {report.current_version} vs {report.baseline_version}
                     &nbsp;·&nbsp; {report.critical_regressions} CRITICAL
                   </div>
                 </div>
                 <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "2rem", fontWeight: 700 }}>
+                  <div style={{ fontFamily: "var(--font-space-mono), monospace", fontSize: "2rem", fontWeight: 700 }}>
                     -{formatPercent(deltaAbs, 1)}
                   </div>
                   <div style={{ fontSize: "0.7rem", opacity: 0.85, letterSpacing: "0.1em" }}>PASS RATE DROP</div>
@@ -87,7 +94,7 @@ export default async function RegressionsPage() {
                   <div style={{ fontWeight: 700, fontSize: "1.25rem", textTransform: "uppercase" }}>
                     NO REGRESSION
                   </div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "0.75rem", marginTop: "0.2rem" }}>
+                  <div style={{ fontFamily: "var(--font-space-mono), monospace", fontSize: "0.75rem", marginTop: "0.2rem" }}>
                     {report.agent_name} — {report.current_version} maintains or improves on {report.baseline_version}
                   </div>
                 </div>
@@ -121,7 +128,7 @@ export default async function RegressionsPage() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-space-mono), monospace",
                     fontSize: "3.5rem",
                     fontWeight: 700,
                     color: "var(--green-dark)",
@@ -151,7 +158,7 @@ export default async function RegressionsPage() {
                 <div className="label-mono" style={{ opacity: 0.75, marginBottom: "0.5rem" }}>CHANGE</div>
                 <div
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-space-mono), monospace",
                     fontSize: "2.5rem",
                     fontWeight: 700,
                     lineHeight: 1,
@@ -161,7 +168,7 @@ export default async function RegressionsPage() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-space-mono), monospace",
                     fontSize: "1.5rem",
                     marginTop: "0.5rem",
                   }}
@@ -186,7 +193,7 @@ export default async function RegressionsPage() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-space-mono), monospace",
                     fontSize: "3.5rem",
                     fontWeight: 700,
                     color: regressed ? "var(--red)" : "var(--green-dark)",
@@ -222,7 +229,7 @@ export default async function RegressionsPage() {
                 >
                   <span
                     style={{
-                      fontFamily: "'Space Mono', monospace",
+                      fontFamily: "var(--font-space-mono), monospace",
                       fontSize: "0.7rem",
                       color: "var(--red)",
                       fontWeight: 700,
@@ -250,7 +257,7 @@ export default async function RegressionsPage() {
                         <td>
                           <span
                             style={{
-                              fontFamily: "'Space Mono', monospace",
+                              fontFamily: "var(--font-space-mono), monospace",
                               fontSize: "0.7rem",
                               fontWeight: 700,
                               textTransform: "uppercase",
@@ -324,7 +331,8 @@ export default async function RegressionsPage() {
             </div>
           </div>
         );
-      })}
+        })
+      )}
     </div>
   );
 }

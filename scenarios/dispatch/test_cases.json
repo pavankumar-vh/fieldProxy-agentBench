@@ -1,0 +1,384 @@
+[
+  {
+    "id": "tc_001",
+    "category": "dispatch",
+    "scenario": "Emergency AC Repair — HVAC Certified + Compressor in Stock",
+    "description": "Schedule emergency AC repair at the next 10:00 slot. Nearest available tech with HVAC cert and compressor part.",
+    "expected_outcome": "Technician with HVAC certification, available at the requested slot, compressor in inventory",
+    "severity": "critical",
+    "tags": ["hvac", "emergency", "inventory"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule an emergency AC repair at the next 10:00 slot. Find the nearest available technician who has the required HVAC certification and a compressor in stock.",
+      "request": {
+        "job_type": "AC_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@10:00",
+        "duration_hours": 2,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": ["COMPRESSOR_R22"],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "critical", "params": { "action": "assign" } },
+        { "rule": "technician_exists", "severity": "critical" },
+        { "rule": "technician_available", "severity": "high" },
+        { "rule": "required_certification", "severity": "critical" },
+        { "rule": "certification_expiry", "severity": "critical" },
+        { "rule": "required_part", "severity": "high" },
+        { "rule": "sla_compliance", "severity": "critical" }
+      ]
+    }
+  },
+  {
+    "id": "tc_002",
+    "category": "certification",
+    "scenario": "Technician Assigned with Expired Certification",
+    "description": "Customer requests tech_003, whose HVAC cert expired 31 days ago. Agent must reject the assignment.",
+    "expected_outcome": "Assignment rejected — certification expired",
+    "severity": "critical",
+    "tags": ["certification", "expiry", "safety"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule an AC inspection at the next 11:00 slot with technician tech_003, who handled our site previously.",
+      "request": {
+        "job_type": "AC_INSPECTION",
+        "urgency": "standard",
+        "requested_at": "next@11:00",
+        "duration_hours": 1,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": [],
+        "preferred_technician_id": "tech_003",
+        "location": { "lat": 12.965, "lng": 77.58 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "critical", "params": { "action": "reject" } },
+        { "rule": "certification_expiry", "severity": "critical" }
+      ]
+    }
+  },
+  {
+    "id": "tc_003",
+    "category": "availability",
+    "scenario": "All HVAC Technicians Unavailable",
+    "description": "Every HVAC-certified tech is blocked at the requested slot. Agent must surface no-available-tech and escalate.",
+    "expected_outcome": "No technician available — escalation triggered",
+    "severity": "high",
+    "tags": ["availability", "escalation"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule an emergency AC repair at the next 15:00 slot. HVAC certification required.",
+      "request": {
+        "job_type": "AC_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@15:00",
+        "duration_hours": 2,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": [],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "technicians": {
+          "tech_007": { "appointments_add": [{ "start_at": "next@15:00", "duration_hours": 2 }] },
+          "tech_012": { "appointments_add": [{ "start_at": "next@15:00", "duration_hours": 2 }] }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "escalate" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_004",
+    "category": "inventory",
+    "scenario": "Required Part Out of Stock",
+    "description": "Job requires a compressor but no candidate has one in inventory.",
+    "expected_outcome": "Job deferred — part unavailable",
+    "severity": "high",
+    "tags": ["inventory", "parts", "deferral"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule a compressor replacement at the next 12:00 slot. HVAC certification and a COMPRESSOR_R22 unit required.",
+      "request": {
+        "job_type": "COMPRESSOR_REPLACEMENT",
+        "urgency": "standard",
+        "requested_at": "next@12:00",
+        "duration_hours": 3,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": ["COMPRESSOR_R22"],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "inventory": {
+          "tech_007": { "COMPRESSOR_R22": 0 },
+          "tech_012": { "COMPRESSOR_R22": 0 },
+          "tech_003": { "COMPRESSOR_R22": 0 }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "defer" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_005",
+    "category": "scheduling",
+    "scenario": "Double Booking Detection",
+    "description": "Customer insists on tech_007, who already has an appointment covering the requested slot.",
+    "expected_outcome": "Conflict detected — alternative slot proposed",
+    "severity": "high",
+    "tags": ["scheduling", "conflict"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "We need Maria Chen (tech_007) specifically for an AC service at the next 13:30 slot.",
+      "request": {
+        "job_type": "AC_SERVICE",
+        "urgency": "standard",
+        "requested_at": "next@13:30",
+        "duration_hours": 1,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": [],
+        "preferred_technician_id": "tech_007",
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "technicians": {
+          "tech_007": { "appointments_add": [{ "start_at": "next@13:30", "duration_hours": 2 }] }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "propose_slot" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_006",
+    "category": "sla",
+    "scenario": "SLA Breach — Emergency Job Beyond Dispatch Window",
+    "description": "Emergency job requested days out, beyond the 24h emergency dispatch SLA. Agent must escalate.",
+    "expected_outcome": "SLA breach detected — escalated to manager",
+    "severity": "critical",
+    "tags": ["sla", "emergency", "escalation"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Book an emergency generator repair for three days from now at 10:00 — this site cannot be without power.",
+      "request": {
+        "job_type": "GENERATOR_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@10:00+3",
+        "duration_hours": 4,
+        "required_skills": [],
+        "required_parts": [],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "critical", "params": { "action": "escalate" } },
+        { "rule": "sla_compliance", "severity": "critical" }
+      ]
+    }
+  },
+  {
+    "id": "tc_007",
+    "category": "dispatch",
+    "scenario": "Standard Plumbing Repair — Skill Match",
+    "description": "Standard plumbing job requiring a licensed plumber.",
+    "expected_outcome": "Nearest available licensed plumber assigned",
+    "severity": "medium",
+    "tags": ["plumbing", "skill-match"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule a standard pipe repair at the next 11:00 slot. A licensed plumber is required.",
+      "request": {
+        "job_type": "PIPE_REPAIR",
+        "urgency": "standard",
+        "requested_at": "next@11:00",
+        "duration_hours": 2,
+        "required_skills": ["PLUMBING_LICENSE"],
+        "required_parts": [],
+        "location": { "lat": 12.99, "lng": 77.57 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "medium", "params": { "action": "assign" } },
+        { "rule": "technician_exists", "severity": "high" },
+        { "rule": "required_certification", "severity": "high" }
+      ]
+    }
+  },
+  {
+    "id": "tc_008",
+    "category": "dispatch",
+    "scenario": "Electrical Panel Upgrade — High-Voltage Cert Required",
+    "description": "Electrical upgrade needing high-voltage certification and a panel kit.",
+    "expected_outcome": "HV-certified electrician with panel kit assigned",
+    "severity": "high",
+    "tags": ["electrical", "certification", "inventory"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Schedule an electrical panel upgrade at the next 12:00 slot. High-voltage certification and a PANEL_KIT are required.",
+      "request": {
+        "job_type": "PANEL_UPGRADE",
+        "urgency": "high",
+        "requested_at": "next@12:00",
+        "duration_hours": 3,
+        "required_skills": ["HIGH_VOLTAGE_CERT"],
+        "required_parts": ["PANEL_KIT"],
+        "location": { "lat": 13.01, "lng": 77.55 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "assign" } },
+        { "rule": "required_certification", "severity": "critical" },
+        { "rule": "required_part", "severity": "high" }
+      ]
+    }
+  },
+  {
+    "id": "tc_009",
+    "category": "availability",
+    "scenario": "Outside Working Hours Request",
+    "description": "Request scheduled at 2 AM — outside every technician's working hours.",
+    "expected_outcome": "No availability — next-day slot proposed",
+    "severity": "medium",
+    "tags": ["working-hours", "scheduling"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Our cold storage failed — we need someone at 2 AM tonight to look at the refrigeration unit.",
+      "request": {
+        "job_type": "REFRIGERATION_REPAIR",
+        "urgency": "high",
+        "requested_at": "next@02:00",
+        "duration_hours": 2,
+        "required_skills": [],
+        "required_parts": [],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "medium", "params": { "action": "propose_slot" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_010",
+    "category": "certification",
+    "scenario": "Invalid Technician ID in Request",
+    "description": "Request references non-existent technician ID tech_999.",
+    "expected_outcome": "Validation error — technician not found",
+    "severity": "high",
+    "tags": ["validation", "invalid-id"],
+    "is_mutation": false,
+    "spec": {
+      "request_text": "Please send technician tech_999 for a boiler check at the next 11:00 slot.",
+      "request": {
+        "job_type": "BOILER_CHECK",
+        "urgency": "standard",
+        "requested_at": "next@11:00",
+        "duration_hours": 1,
+        "required_skills": [],
+        "required_parts": [],
+        "preferred_technician_id": "tech_999",
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "reject" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_011",
+    "category": "certification",
+    "scenario": "[MUTATION] HVAC Cert Expired — Should Reject",
+    "description": "Mutation of tc_001: tech_007's HVAC certification set to expired 1 day ago.",
+    "expected_outcome": "Assignment rejected — certification expired",
+    "severity": "critical",
+    "tags": ["mutation", "certification", "expiry"],
+    "is_mutation": true,
+    "parent_id": "tc_001",
+    "spec": {
+      "request_text": "Schedule an emergency AC repair at the next 10:00 slot with technician tech_007 (Maria Chen).",
+      "request": {
+        "job_type": "AC_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@10:00",
+        "duration_hours": 2,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": [],
+        "preferred_technician_id": "tech_007",
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "technicians": {
+          "tech_007": { "skills": { "HVAC_CERT": { "cert_expiry": "now-1d" } } }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "critical", "params": { "action": "reject" } },
+        { "rule": "certification_expiry", "severity": "critical" }
+      ]
+    }
+  },
+  {
+    "id": "tc_012",
+    "category": "inventory",
+    "scenario": "[MUTATION] Compressor Qty=0 — Should Defer",
+    "description": "Mutation of tc_001: compressor inventory quantity set to 0 for all HVAC techs.",
+    "expected_outcome": "Job deferred — part out of stock",
+    "severity": "high",
+    "tags": ["mutation", "inventory"],
+    "is_mutation": true,
+    "parent_id": "tc_001",
+    "spec": {
+      "request_text": "Schedule an emergency AC repair at the next 10:00 slot. HVAC certification and a COMPRESSOR_R22 unit required.",
+      "request": {
+        "job_type": "AC_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@10:00",
+        "duration_hours": 2,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": ["COMPRESSOR_R22"],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "inventory": {
+          "tech_007": { "COMPRESSOR_R22": 0 },
+          "tech_012": { "COMPRESSOR_R22": 0 },
+          "tech_003": { "COMPRESSOR_R22": 0 }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "high", "params": { "action": "defer" } }
+      ]
+    }
+  },
+  {
+    "id": "tc_013",
+    "category": "availability",
+    "scenario": "[MUTATION] Tech Marked Unavailable — Should Find Alternative",
+    "description": "Mutation of tc_001: nearest tech (tech_007) is booked at the requested slot; agent must fall back to another qualified tech.",
+    "expected_outcome": "Alternative technician assigned",
+    "severity": "medium",
+    "tags": ["mutation", "availability"],
+    "is_mutation": true,
+    "parent_id": "tc_001",
+    "spec": {
+      "request_text": "Schedule an emergency AC repair at the next 10:00 slot. Nearest HVAC-certified technician with a compressor preferred.",
+      "request": {
+        "job_type": "AC_REPAIR",
+        "urgency": "emergency",
+        "requested_at": "next@10:00",
+        "duration_hours": 2,
+        "required_skills": ["HVAC_CERT"],
+        "required_parts": ["COMPRESSOR_R22"],
+        "location": { "lat": 12.975, "lng": 77.6 }
+      },
+      "world_overrides": {
+        "technicians": {
+          "tech_007": { "appointments_add": [{ "start_at": "next@10:00", "duration_hours": 2 }] }
+        }
+      },
+      "checks": [
+        { "rule": "outcome_is", "severity": "medium", "params": { "action": "assign" } },
+        { "rule": "technician_not", "severity": "medium", "params": { "technician_id": "tech_007" } },
+        { "rule": "technician_available", "severity": "high" }
+      ]
+    }
+  }
+]

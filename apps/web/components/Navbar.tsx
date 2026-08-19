@@ -18,64 +18,58 @@ const links = [
   { href: "/regressions", label: "Regressions", icon: GitCompare },
 ];
 
+const FIXTURE_MODE = process.env.NEXT_PUBLIC_USE_FIXTURES === "true";
+
 export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="navbar">
-      <div className="navbar-inner">
-        {/* Brand */}
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <div className="nav-brand">
-            <span className="nav-brand-primary">▶ FIELDPROXY</span>
-            <span className="nav-brand-secondary">AgentBench</span>
-          </div>
-        </Link>
+    <aside className="sidebar">
+      {/* Brand */}
+      <Link href="/" style={{ textDecoration: "none" }}>
+        <div className="sidebar-brand">
+          <span className="nav-brand-primary">▶ FIELDPROXY</span>
+          <span className="nav-brand-secondary">AgentBench</span>
+        </div>
+      </Link>
 
-        {/* Nav Links */}
-        <ul className="nav-links">
-          {links.map(({ href, label, icon: Icon }) => {
-            const isActive =
-              href === "/" ? pathname === "/" : pathname.startsWith(href);
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className={`nav-link${isActive ? " active" : ""}`}
-                >
-                  <Icon size={13} />
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      {/* Nav links */}
+      <ul className="sidebar-links">
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive =
+            href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                className={`sidebar-link${isActive ? " active" : ""}`}
+              >
+                <Icon size={14} />
+                {label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
 
-        {/* Status pill */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.35rem 0.75rem",
-            border: "2px solid #3D3C38",
-            background: "#1a1a1a",
-          }}
-        >
-          <span className="status-dot status-dot-pass" />
+      {/* Status footer */}
+      <div className="sidebar-footer">
+        <div className="status-pill">
           <span
-            style={{
-              fontFamily: "'Space Mono', monospace",
-              fontSize: "0.65rem",
-              color: "#00FF94",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-            }}
-          >
-            FIXTURES
+            className={`status-dot ${
+              FIXTURE_MODE ? "status-dot-warn" : "status-dot-pass"
+            }`}
+          />
+          <span className="status-pill-label">
+            {FIXTURE_MODE ? "Fixtures" : "Live API"}
           </span>
         </div>
+        <div className="sidebar-meta">
+          Benchmark harness
+          <br />
+          FastAPI · Postgres · Gemini
+        </div>
       </div>
-    </nav>
+    </aside>
   );
 }

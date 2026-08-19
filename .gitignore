@@ -19,6 +19,9 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.sqlite
+*.sqlite3
+test_agentbench.db
 
 # Node
 node_modules/
@@ -49,3 +52,4 @@ npm-debug.log*
 *.key
 credentials.json
 service-account.json
+screenshot*.png

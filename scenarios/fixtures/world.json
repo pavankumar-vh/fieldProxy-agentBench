@@ -1,0 +1,65 @@
+{
+  "technicians": [
+    {
+      "id": "tech_007",
+      "name": "Maria Chen",
+      "lat": 12.9716,
+      "lng": 77.5946,
+      "working_start": "06:00",
+      "working_end": "22:00",
+      "skills": [
+        { "skill": "HVAC_CERT", "cert_expiry": "now+210d" },
+        { "skill": "ELECTRICAL_BASIC", "cert_expiry": "now+400d" }
+      ],
+      "inventory": { "COMPRESSOR_R22": 2, "PANEL_KIT": 1 },
+      "appointments": [{ "start_at": "next@13:00", "duration_hours": 2 }]
+    },
+    {
+      "id": "tech_012",
+      "name": "Rajan Patel",
+      "lat": 12.9352,
+      "lng": 77.6245,
+      "working_start": "06:00",
+      "working_end": "22:00",
+      "skills": [{ "skill": "HVAC_CERT", "cert_expiry": "now+90d" }],
+      "inventory": { "COMPRESSOR_R22": 1 },
+      "appointments": []
+    },
+    {
+      "id": "tech_003",
+      "name": "Viktor Sorokin",
+      "lat": 12.965,
+      "lng": 77.58,
+      "working_start": "06:00",
+      "working_end": "22:00",
+      "skills": [{ "skill": "HVAC_CERT", "cert_expiry": "now-31d" }],
+      "inventory": { "COMPRESSOR_R22": 1 },
+      "appointments": []
+    },
+    {
+      "id": "tech_021",
+      "name": "Priya Nair",
+      "lat": 12.99,
+      "lng": 77.57,
+      "working_start": "06:00",
+      "working_end": "22:00",
+      "skills": [
+        { "skill": "PLUMBING_LICENSE", "cert_expiry": "now+500d" },
+        { "skill": "PIPE_REPAIR", "cert_expiry": "now+300d" }
+      ],
+      "inventory": {},
+      "appointments": []
+    },
+    {
+      "id": "tech_045",
+      "name": "Arjun Mehta",
+      "lat": 13.01,
+      "lng": 77.55,
+      "working_start": "06:00",
+      "working_end": "22:00",
+      "skills": [{ "skill": "HIGH_VOLTAGE_CERT", "cert_expiry": "now+150d" }],
+      "inventory": { "PANEL_KIT": 1 },
+      "appointments": []
+    }
+  ]
+}

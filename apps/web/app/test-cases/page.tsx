@@ -1,6 +1,7 @@
 import { getTestCases } from "@/lib/api";
 import { formatDateTime, severityColor, resultBadge, categoryColor } from "@/lib/utils";
 import type { Metadata } from "next";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata: Metadata = {
   title: "Test Cases — Fieldproxy AgentBench",
@@ -49,6 +50,13 @@ export default async function TestCasesPage() {
         </span>
       </div>
 
+      {cases.length === 0 ? (
+        <EmptyState
+          title="NO TEST CASES"
+          message="NO TEST CASES FOUND — SEED THE DATABASE TO POPULATE THE SUITE."
+        />
+      ) : (
+      <>
       {/* Summary row */}
       <div
         style={{
@@ -80,7 +88,7 @@ export default async function TestCasesPage() {
           >
             <div
               style={{
-                fontFamily: "'Space Mono', monospace",
+                fontFamily: "var(--font-space-mono), monospace",
                 fontSize: "2.5rem",
                 fontWeight: 700,
                 color: accent,
@@ -199,6 +207,8 @@ export default async function TestCasesPage() {
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }

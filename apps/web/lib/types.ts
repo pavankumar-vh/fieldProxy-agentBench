@@ -19,6 +19,7 @@ export interface AgentVersion {
   name: string;
   version: string;
   model: string;
+  engine?: "policy" | "gemini" | "langgraph";
   prompt_hash: string;
   pass_rate: number;
   total_tests: number;
@@ -66,7 +67,7 @@ export interface BenchmarkRun {
 export interface AgentStep {
   id: string;
   step_index: number;
-  type: "intent_parsing" | "tool_call" | "tool_result" | "decision" | "evaluation";
+  type: "intent_parsing" | "tool_call" | "tool_result" | "decision" | "evaluation" | "llm_call";
   name: string;
   input?: Record<string, unknown>;
   output?: Record<string, unknown>;

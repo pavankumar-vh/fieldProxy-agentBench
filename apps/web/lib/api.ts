@@ -1,7 +1,6 @@
 // ─── API CLIENT ───────────────────────────────────────────
-// Phase 1: returns fixture data.
-// Phase 2: swap USE_FIXTURES=false → hits real FastAPI endpoints.
-// Types are identical — no page rewrites needed.
+// Real API by default. Set NEXT_PUBLIC_USE_FIXTURES=true to fall back to
+// the static fixture data (UI development only).
 
 import {
   dashboardMetrics,
@@ -20,19 +19,62 @@ import type {
   DashboardMetrics,
 } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const USE_FIXTURES = true; // Flip to false in Phase 2
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES === "true";
+const REQUEST_TIMEOUT_MS = 10000;
+
+/** API failure carrying the HTTP status (0 for network/timeout errors). */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API ${path} → ${res.status}: ${err}`);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      throw new ApiError(`API ${path} → TIMEOUT AFTER ${REQUEST_TIMEOUT_MS / 1000}S`, 0);
+    }
+    throw new ApiError(`API ${path} → NETWORK ERROR`, 0);
   }
-  return res.json();
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const body: unknown = await res.json();
+      if (
+        body !== null &&
+        typeof body === "object" &&
+        "detail" in body &&
+        typeof (body as { detail: unknown }).detail === "string"
+      ) {
+        detail = (body as { detail: string }).detail;
+      }
+    } catch {
+      // Non-JSON error body — the status line above is enough.
+    }
+    throw new ApiError(
+      `API ${path} → ${res.status}${detail ? `: ${detail}` : ""}`,
+      res.status
+    );
+  }
+
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new ApiError(`API ${path} → INVALID JSON IN RESPONSE`, res.status);
+  }
 }
 
 // ── Dashboard ──────────────────────────────────────────────
@@ -71,7 +113,7 @@ export async function getRuns(): Promise<BenchmarkRun[]> {
 export async function getRunDetail(id: string): Promise<RunDetail> {
   if (USE_FIXTURES) {
     const r = runDetails[id];
-    if (!r) throw new Error(`Run ${id} not found`);
+    if (!r) throw new ApiError(`Run ${id} not found`, 404);
     return r;
   }
   return apiFetch<RunDetail>(`/runs/${id}`);

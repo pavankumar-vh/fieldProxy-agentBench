@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-
 :root {
+  --font-space-mono: 'Space Mono';
+  --font-space-grotesk: 'Space Grotesk';
   --cream: #FFFDF5;
   --black: #0A0A0A;
   --yellow: #FFE500;
@@ -46,7 +46,7 @@ html {
 body {
   background-color: var(--cream);
   color: var(--black);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-weight: 400;
   line-height: 1.5;
   min-height: 100vh;
@@ -54,10 +54,10 @@ body {
 }
 
 /* ─── TYPOGRAPHY ────────────────────────────────────────── */
-.font-mono { font-family: 'Space Mono', monospace; }
+.font-mono { font-family: var(--font-space-mono), monospace; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -87,7 +87,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .label-mono {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -95,7 +95,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .data-value {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 2.5rem;
   font-weight: 700;
   line-height: 1;
@@ -190,7 +190,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-weight: 700;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
@@ -279,7 +279,7 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.625rem;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -302,7 +302,7 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.5rem;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.65rem;
   font-weight: 400;
   letter-spacing: 0.05em;
@@ -320,7 +320,7 @@ h1, h2, h3, h4, h5, h6 {
 .table-brutal th {
   background: var(--black);
   color: var(--cream);
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -344,23 +344,36 @@ h1, h2, h3, h4, h5, h6 {
 .table-brutal tr:hover td { background: var(--gray-100); }
 .table-brutal tr:last-child td { border-bottom: none; }
 
-/* ─── NAVBAR ────────────────────────────────────────────── */
-.navbar {
-  background: var(--black);
-  border-bottom: 3px solid var(--yellow);
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
   position: sticky;
   top: 0;
+  height: 100vh;
+  width: 232px;
+  flex-shrink: 0;
+  background: var(--black);
+  border-right: 3px solid var(--yellow);
+  display: flex;
+  flex-direction: column;
   z-index: 100;
 }
 
-.navbar-inner {
+.sidebar-brand {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-  height: 64px;
-  max-width: 1400px;
-  margin: 0 auto;
+  flex-direction: column;
+  line-height: 1.15;
+  padding: 1.5rem 1.25rem;
+  border-bottom: 2px solid var(--gray-700);
 }
 
 .nav-brand {
@@ -370,7 +383,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-brand-primary {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   color: var(--yellow);
   letter-spacing: 0.15em;
@@ -378,7 +391,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-brand-secondary {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--white);
@@ -386,40 +399,102 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
 }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0;
+.sidebar-links {
   list-style: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 1rem 0;
 }
 
-.nav-link {
+.sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  font-family: 'Space Mono', monospace;
+  gap: 0.6rem;
+  padding: 0.7rem 1.25rem;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--gray-300);
   text-decoration: none;
-  border-left: 1px solid var(--gray-700);
-  transition: color 0.15s, background 0.15s;
+  border-left: 4px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
-.nav-link:hover {
+.sidebar-link:hover {
   color: var(--yellow);
-  background: var(--gray-700);
+  background: rgba(255, 229, 0, 0.08);
+  border-left-color: var(--yellow);
 }
 
-.nav-link.active {
+.sidebar-link.active {
   color: var(--black);
   background: var(--yellow);
+  border-left-color: var(--yellow);
+  font-weight: 700;
 }
 
-.nav-link:last-child { border-right: 1px solid var(--gray-700); }
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-top: 2px solid var(--gray-700);
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.35rem 0.75rem;
+  border: 2px solid var(--gray-700);
+  background: #1a1a1a;
+}
+
+.status-pill-label {
+  font-family: var(--font-space-mono), monospace;
+  font-size: 0.65rem;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sidebar-meta {
+  font-family: var(--font-space-mono), monospace;
+  font-size: 0.55rem;
+  color: var(--gray-500);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .app-shell { flex-direction: column; }
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 3px solid var(--yellow);
+  }
+  .sidebar-brand { padding: 1rem 1.25rem; }
+  .sidebar-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0.5rem;
+  }
+  .sidebar-link {
+    border-left: none;
+    padding: 0.5rem 0.9rem;
+  }
+  .sidebar-link.active { border-left: none; }
+  .sidebar-footer { display: none; }
+}
 
 /* ─── STATUS INDICATORS ─────────────────────────────────── */
 .status-dot {
@@ -484,7 +559,7 @@ h1, h2, h3, h4, h5, h6 {
 .input-brutal {
   width: 100%;
   padding: 0.75rem 1rem;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-size: 0.875rem;
   border: 3px solid var(--black);
   border-radius: 0;
@@ -501,7 +576,7 @@ h1, h2, h3, h4, h5, h6 {
   appearance: none;
   width: 100%;
   padding: 0.75rem 2.5rem 0.75rem 1rem;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
   border: 3px solid var(--black);
@@ -517,7 +592,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .label-field {
   display: block;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -532,9 +607,20 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.toggle-wrap:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .toggle-track {
+  display: block;
   width: 52px;
   height: 28px;
   background: var(--gray-200);
@@ -547,6 +633,7 @@ h1, h2, h3, h4, h5, h6 {
 .toggle-track.on { background: var(--green); }
 
 .toggle-thumb {
+  display: block;
   width: 18px;
   height: 18px;
   background: var(--black);
@@ -569,7 +656,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .section-num {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.7rem;
   background: var(--black);
   color: var(--yellow);
@@ -589,13 +676,22 @@ h1, h2, h3, h4, h5, h6 {
 
 .ticker-inner {
   display: inline-flex;
-  gap: 3rem;
+  width: max-content;
   animation: ticker 25s linear infinite;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+/* Each half carries its own trailing gap (padding-right) so the two halves
+   are exactly equal and translateX(-50%) lands on a seamless loop point. */
+.ticker-half {
+  display: inline-flex;
+  align-items: center;
+  gap: 3rem;
+  padding-right: 3rem;
 }
 
 @keyframes ticker {
@@ -664,7 +760,7 @@ h1, h2, h3, h4, h5, h6 {
 .disclaimer-bar {
   background: var(--black);
   color: var(--gray-300);
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -685,7 +781,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stat-card-value {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 2.75rem;
   font-weight: 700;
   line-height: 1;
@@ -693,7 +789,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stat-card-label {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), monospace;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -705,4 +801,31 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.8rem;
   color: var(--gray-500);
   margin-top: 0.25rem;
+}
+
+/* ─── SKELETON (loading.tsx) ────────────────────────────── */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.skeleton-block {
+  border: 3px solid var(--black);
+  background: var(--gray-100);
+  box-shadow: var(--shadow);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ─── REDUCED MOTION ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-inner,
+  .skeleton-block {
+    animation: none;
+  }
 }

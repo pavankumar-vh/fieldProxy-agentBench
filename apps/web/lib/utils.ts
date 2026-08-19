@@ -1,30 +1,39 @@
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
 export function formatPercent(value: number, decimals = 1): string {
   return `${value.toFixed(decimals)}%`;
 }
 
+// Locale and time zone are pinned so server and client render identical strings.
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+  const date = new Date(iso).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
+  return `${date} UTC`;
 }
 
+// Locale and time zone are pinned so server and client render identical strings.
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-US", {
+    year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
+  });
+  const time = d.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC",
   });
+  return `${date} ${time} UTC`;
 }
 
-export function formatDuration(ms: number | null): string {
-  if (!ms) return "—";
+export function formatDuration(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
+  if (ms < 1000) return `${ms}ms`;
   const seconds = Math.floor(ms / 1000);
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
@@ -57,6 +66,8 @@ export function resultBadge(result: string | null): string {
   }
 }
 
+// Single source of truth for run status badges (backend RunStatus:
+// queued | running | completed | failed).
 export function statusBadge(status: string): string {
   switch (status) {
     case "completed": return "badge-pass";
@@ -86,10 +97,4 @@ export function categoryColor(cat: string): string {
     sla: "badge-fail",
   };
   return map[cat] ?? "badge-gray";
-}
-
-export function deltaColor(delta: number): string {
-  if (delta > 0) return "#00FF94";
-  if (delta < 0) return "#FF1A1A";
-  return "#888580";
 }

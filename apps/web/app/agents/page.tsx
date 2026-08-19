@@ -2,6 +2,7 @@ import { getAgents } from "@/lib/api";
 import Link from "next/link";
 import { formatPercent, formatDate, agentStatusBadge } from "@/lib/utils";
 import type { Metadata } from "next";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata: Metadata = {
   title: "Agents — Fieldproxy AgentBench",
@@ -28,9 +29,42 @@ export default async function AgentsPage() {
         benchmark score, and failure history independently.
       </p>
 
+      {agents.length === 0 ? (
+        <EmptyState
+          title="NO AGENTS"
+          message="NO AGENTS REGISTERED — SEED THE DATABASE TO REGISTER AGENT VERSIONS."
+        />
+      ) : (
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {agents.map((agent, idx) => {
           const isActive = agent.status === "active";
+          const cells: { label: string; value: string; color?: string }[] = [
+            { label: "VERSION", value: agent.version },
+            {
+              label: "ENGINE",
+              value:
+                agent.engine === "gemini"
+                  ? "LLM · Gemini"
+                  : agent.engine === "langgraph"
+                    ? "LLM · LangGraph"
+                    : "Rules",
+            },
+            { label: "MODEL", value: agent.model },
+            { label: "PROMPT HASH", value: agent.prompt_hash },
+            { label: "TOTAL TESTS", value: String(agent.total_tests) },
+            { label: "PASSED", value: String(agent.passed), color: "var(--green-dark)" },
+            {
+              label: "FAILED",
+              value: String(agent.failed),
+              color: agent.failed > 0 ? "var(--red)" : undefined,
+            },
+            {
+              label: "CRITICAL",
+              value: String(agent.critical_failures),
+              color: agent.critical_failures > 0 ? "var(--red)" : undefined,
+            },
+            { label: "CREATED", value: formatDate(agent.created_at) },
+          ];
           return (
             <div
               key={agent.id}
@@ -90,7 +124,7 @@ export default async function AgentsPage() {
                 <div style={{ textAlign: "right" }}>
                   <div
                     style={{
-                      fontFamily: "'Space Mono', monospace",
+                      fontFamily: "var(--font-space-mono), monospace",
                       fontSize: "3rem",
                       fontWeight: 700,
                       lineHeight: 1,
@@ -114,38 +148,30 @@ export default async function AgentsPage() {
                 </div>
               </div>
 
-              {/* Metadata grid */}
+              {/* Metadata grid — uniform 1.5px hairlines at any column count
+                  via gaps that show the grid's own background */}
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                  gap: "0",
+                  gap: "1.5px",
+                  background: isActive ? "var(--gray-700)" : "var(--gray-200)",
                   border: isActive ? "2px solid var(--gray-700)" : "2px solid var(--black)",
                   marginBottom: "1.5rem",
                 }}
               >
-                {[
-                  { label: "VERSION", value: agent.version },
-                  { label: "MODEL", value: agent.model },
-                  { label: "PROMPT HASH", value: agent.prompt_hash },
-                  { label: "TOTAL TESTS", value: String(agent.total_tests) },
-                  { label: "PASSED", value: String(agent.passed) },
-                  { label: "FAILED", value: String(agent.failed) },
-                  { label: "CRITICAL", value: String(agent.critical_failures) },
-                  { label: "CREATED", value: formatDate(agent.created_at) },
-                ].map(({ label, value }, i) => (
+                {cells.map(({ label, value, color }) => (
                   <div
                     key={label}
                     style={{
                       padding: "0.875rem 1rem",
-                      borderRight: i % 4 !== 3 ? (isActive ? "1.5px solid var(--gray-700)" : "1.5px solid var(--gray-200)") : "none",
-                      borderBottom: Math.floor(i / 4) === 0 ? (isActive ? "1.5px solid var(--gray-700)" : "1.5px solid var(--gray-200)") : "none",
+                      background: isActive ? "var(--black)" : "var(--white)",
                     }}
                   >
                     <div
                       className="label-mono"
                       style={{
-                        color: isActive ? "var(--gray-500)" : "var(--gray-500)",
+                        color: isActive ? "var(--gray-300)" : "var(--gray-500)",
                         fontSize: "0.6rem",
                         marginBottom: "0.25rem",
                       }}
@@ -154,19 +180,10 @@ export default async function AgentsPage() {
                     </div>
                     <div
                       style={{
-                        fontFamily: "'Space Mono', monospace",
+                        fontFamily: "var(--font-space-mono), monospace",
                         fontSize: "0.85rem",
                         fontWeight: 700,
-                        color:
-                          label === "FAILED" && parseInt(value) > 0
-                            ? "var(--red)"
-                            : label === "CRITICAL" && parseInt(value) > 0
-                            ? "var(--red)"
-                            : label === "PASSED"
-                            ? "var(--green-dark)"
-                            : isActive
-                            ? "var(--cream)"
-                            : "var(--black)",
+                        color: color ?? (isActive ? "var(--cream)" : "var(--black)"),
                       }}
                     >
                       {value}
@@ -228,7 +245,7 @@ export default async function AgentsPage() {
                       boxShadow: "none",
                     }}
                   >
-                    DEPRECATED
+                    {agent.status.toUpperCase()}
                   </span>
                 )}
               </div>
@@ -236,6 +253,7 @@ export default async function AgentsPage() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

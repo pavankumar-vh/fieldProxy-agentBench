@@ -1,32 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { startBenchmark } from "@/lib/api";
-
-const AGENTS = [
-  { id: "av_001", label: "Dispatch Agent v1.2 (active)" },
-  { id: "av_002", label: "Dispatch Agent v1.1 (deprecated)" },
-  { id: "av_003", label: "Dispatch Agent v1.0 (deprecated)" },
-];
+import { getAgents, startBenchmark } from "@/lib/api";
+import type { AgentVersion } from "@/lib/types";
 
 const BENCHMARKS = [
-  { id: "full", label: "Full Benchmark (30 cases)" },
-  { id: "dispatch", label: "Dispatch Only (7 cases)" },
+  { id: "full", label: "Full Benchmark (all cases)" },
+  { id: "dispatch", label: "Dispatch Only" },
   { id: "critical", label: "Critical Cases Only" },
   { id: "mutations", label: "Mutation Tests Only" },
 ];
 
-const VERSIONS = ["none", "v1.0", "v1.1", "v1.2"];
-
 export default function BenchmarkLauncher() {
   const router = useRouter();
-  const [agentId, setAgentId] = useState("av_001");
+  const [agents, setAgents] = useState<AgentVersion[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentId, setAgentId] = useState("");
   const [benchmark, setBenchmark] = useState("full");
   const [mutations, setMutations] = useState(true);
-  const [compareAgainst, setCompareAgainst] = useState("v1.1");
+  const [compareAgainst, setCompareAgainst] = useState("none");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // "none" first, then every version that actually exists in the registry.
+  const compareVersions = [
+    "none",
+    ...Array.from(new Set(agents.map((a) => a.version))),
+  ];
+
+  useEffect(() => {
+    getAgents()
+      .then((list) => {
+        setAgents(list);
+        const active = list.find((a) => a.status === "active");
+        const selected = active ?? list[0];
+        setAgentId(selected?.id ?? "");
+        // Default the comparison to the newest other version, if one exists.
+        const other = list.find((a) => a.version !== selected?.version);
+        setCompareAgainst(other?.version ?? "none");
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load agents"))
+      .finally(() => setAgentsLoading(false));
+  }, []);
 
   async function handleRun() {
     setLoading(true);
@@ -53,7 +69,7 @@ export default function BenchmarkLauncher() {
       <div className="section-header" style={{ marginBottom: "1.5rem", borderColor: "var(--black)" }}>
         <span
           style={{
-            fontFamily: "'Space Mono', monospace",
+            fontFamily: "var(--font-space-mono), monospace",
             fontSize: "0.7rem",
             background: "var(--black)",
             color: "var(--yellow)",
@@ -63,7 +79,7 @@ export default function BenchmarkLauncher() {
         >
           01
         </span>
-        <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+        <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
           LAUNCH BENCHMARK
         </h2>
       </div>
@@ -78,22 +94,25 @@ export default function BenchmarkLauncher() {
       >
         {/* Agent */}
         <div>
-          <label className="label-field">AGENT</label>
+          <label className="label-field" htmlFor="agent-select">AGENT</label>
           <select
             id="agent-select"
             className="select-brutal"
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
           >
-            {AGENTS.map((a) => (
-              <option key={a.id} value={a.id}>{a.label}</option>
+            {agentsLoading && <option value="">LOADING…</option>}
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} {a.version} ({a.status})
+              </option>
             ))}
           </select>
         </div>
 
         {/* Benchmark */}
         <div>
-          <label className="label-field">BENCHMARK</label>
+          <label className="label-field" htmlFor="benchmark-select">BENCHMARK</label>
           <select
             id="benchmark-select"
             className="select-brutal"
@@ -108,14 +127,14 @@ export default function BenchmarkLauncher() {
 
         {/* Compare Against */}
         <div>
-          <label className="label-field">COMPARE AGAINST</label>
+          <label className="label-field" htmlFor="compare-select">COMPARE AGAINST</label>
           <select
             id="compare-select"
             className="select-brutal"
             value={compareAgainst}
             onChange={(e) => setCompareAgainst(e.target.value)}
           >
-            {VERSIONS.map((v) => (
+            {compareVersions.map((v) => (
               <option key={v} value={v}>{v === "none" ? "No comparison" : v}</option>
             ))}
           </select>
@@ -123,25 +142,28 @@ export default function BenchmarkLauncher() {
 
         {/* Mutation toggle */}
         <div>
-          <label className="label-field">MUTATION TESTING</label>
-          <div
+          <label className="label-field" htmlFor="mutation-toggle">MUTATION TESTING</label>
+          <button
+            type="button"
+            id="mutation-toggle"
             className="toggle-wrap"
             style={{ marginTop: "0.6rem" }}
+            aria-pressed={mutations}
             onClick={() => setMutations((m) => !m)}
           >
-            <div className={`toggle-track ${mutations ? "on" : ""}`}>
-              <div className="toggle-thumb" />
-            </div>
+            <span className={`toggle-track ${mutations ? "on" : ""}`}>
+              <span className="toggle-thumb" />
+            </span>
             <span
               style={{
-                fontFamily: "'Space Mono', monospace",
+                fontFamily: "var(--font-space-mono), monospace",
                 fontWeight: 700,
                 fontSize: "0.85rem",
               }}
             >
               {mutations ? "ON" : "OFF"}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -153,7 +175,7 @@ export default function BenchmarkLauncher() {
             border: "2px solid var(--black)",
             padding: "0.75rem 1rem",
             marginBottom: "1rem",
-            fontFamily: "'Space Mono', monospace",
+            fontFamily: "var(--font-space-mono), monospace",
             fontSize: "0.8rem",
           }}
         >
@@ -165,21 +187,29 @@ export default function BenchmarkLauncher() {
         id="run-benchmark-btn"
         className="btn btn-black btn-xl"
         onClick={handleRun}
-        disabled={loading}
-        style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+        disabled={loading || agentsLoading || !agentId}
+        style={{
+          opacity: loading || agentsLoading || !agentId ? 0.6 : 1,
+          cursor: loading || agentsLoading || !agentId ? "not-allowed" : "pointer",
+        }}
       >
-        {loading ? "⏳ LAUNCHING..." : "▶ RUN TESTS"}
+        {loading
+          ? "⏳ LAUNCHING..."
+          : agentsLoading
+          ? "⏳ LOADING AGENTS..."
+          : "▶ RUN TESTS"}
       </button>
 
       <p
         style={{
           marginTop: "1rem",
-          fontFamily: "'Space Mono', monospace",
+          fontFamily: "var(--font-space-mono), monospace",
           fontSize: "0.7rem",
           color: "var(--gray-700)",
         }}
       >
-        ⚠ Phase 1: Redirects to fixture run. Phase 2: Triggers real FastAPI benchmark execution.
+        Executes the selected agent against the seeded field-service world.
+        Every result is computed live and persisted — nothing is simulated.
       </p>
     </div>
   );

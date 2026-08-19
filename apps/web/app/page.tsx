@@ -1,6 +1,6 @@
 import { getDashboardMetrics, getRuns } from "@/lib/api";
 import Link from "next/link";
-import { formatPercent, formatDateTime, formatDuration } from "@/lib/utils";
+import { formatPercent, formatDateTime, formatDuration, statusBadge } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,15 @@ export default async function DashboardPage() {
 
   const recentRuns = runs.slice(0, 5);
 
+  // The reliability metric is the pass rate of the latest completed run, so
+  // label it with that run's agent instead of a hardcoded version.
+  const latestAgentRun = runs.find((r) => r.status === "completed") ?? runs[0];
+  const agentLabel = latestAgentRun
+    ? `${latestAgentRun.agent_name} ${latestAgentRun.agent_version}`
+    : "LATEST AGENT";
+
   const tickerItems = [
-    `DISPATCH AGENT v1.2 — PASS RATE ${formatPercent(metrics.agent_reliability)}`,
+    `${agentLabel} — PASS RATE ${formatPercent(metrics.agent_reliability)}`,
     `TOTAL RUNS: ${metrics.total_runs}`,
     `TEST CASES: ${metrics.total_test_cases}`,
     `CRITICAL FAILURES: ${metrics.critical}`,
@@ -26,8 +33,12 @@ export default async function DashboardPage() {
       {/* Ticker */}
       <div className="ticker-bar">
         <div className="ticker-inner">
-          {[...tickerItems, ...tickerItems].map((item, i) => (
-            <span key={i}>◆ {item}</span>
+          {[0, 1].map((half) => (
+            <div className="ticker-half" key={half} aria-hidden={half === 1}>
+              {tickerItems.map((item) => (
+                <span key={item}>{`◆ ${item}`}</span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -108,7 +119,7 @@ export default async function DashboardPage() {
               {formatPercent(metrics.agent_reliability)}
             </span>
             <span className="stat-card-sub" style={{ color: "var(--gray-300)" }}>
-              Dispatch Agent v1.2
+              {agentLabel}
             </span>
           </div>
 
@@ -166,7 +177,7 @@ export default async function DashboardPage() {
                 : "NEVER"}
             </span>
             <span className="stat-card-sub" style={{ color: "rgba(255,255,255,0.7)" }}>
-              Dispatch Agent v1.2
+              {agentLabel}
             </span>
           </div>
         </div>
@@ -175,7 +186,7 @@ export default async function DashboardPage() {
         <div style={{ marginBottom: "2.5rem" }}>
           <div className="section-header">
             <span className="section-num">01</span>
-            <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+            <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
               EXECUTION PIPELINE
             </h2>
           </div>
@@ -185,7 +196,7 @@ export default async function DashboardPage() {
               background: "var(--black)",
               color: "var(--cream)",
               padding: "2rem",
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-space-mono), monospace",
             }}
           >
             <div
@@ -222,12 +233,12 @@ export default async function DashboardPage() {
             </div>
             <div style={{ marginTop: "1.5rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
               {[
-                { label: "LangGraph", status: "Phase 3" },
-                { label: "Gemini API", status: "Phase 3" },
-                { label: "PostgreSQL", status: "Phase 2" },
-                { label: "FastAPI", status: "Phase 2" },
+                { label: "LangGraph", status: "✓ Active" },
+                { label: "Gemini API", status: "✓ Active" },
+                { label: "PostgreSQL", status: "✓ Active" },
+                { label: "FastAPI", status: "✓ Active" },
                 { label: "Frontend", status: "✓ Active" },
-                { label: "Evaluator", status: "Phase 4" },
+                { label: "Evaluator", status: "✓ Active" },
               ].map(({ label, status }) => (
                 <div
                   key={label}
@@ -261,7 +272,7 @@ export default async function DashboardPage() {
         <div>
           <div className="section-header">
             <span className="section-num">02</span>
-            <h2 style={{ fontSize: "1rem", fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>
+            <h2 style={{ fontSize: "1rem", fontFamily: "var(--font-space-mono), monospace", letterSpacing: "0.1em" }}>
               RECENT BENCHMARK RUNS
             </h2>
             <Link
@@ -277,7 +288,7 @@ export default async function DashboardPage() {
             style={{
               border: "3px solid var(--black)",
               boxShadow: "var(--shadow)",
-              overflow: "hidden",
+              overflowX: "auto",
             }}
           >
             <table className="table-brutal">
@@ -311,22 +322,14 @@ export default async function DashboardPage() {
                       <span className="badge badge-black">{run.agent_version}</span>
                     </td>
                     <td>
-                      <span
-                        className={`badge ${
-                          run.status === "completed"
-                            ? "badge-pass"
-                            : run.status === "running"
-                            ? "badge-info"
-                            : "badge-fail"
-                        }`}
-                      >
+                      <span className={`badge ${statusBadge(run.status)}`}>
                         {run.status.toUpperCase()}
                       </span>
                     </td>
                     <td>
                       <span
                         style={{
-                          fontFamily: "'Space Mono', monospace",
+                          fontFamily: "var(--font-space-mono), monospace",
                           fontWeight: 700,
                           color:
                             run.pass_rate >= 95
