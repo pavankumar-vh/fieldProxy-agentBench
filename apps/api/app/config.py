@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Gemini provider (free API keys: https://aistudio.google.com).
     gemini_api_key: str = ""
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-3.5-flash"
 
     @model_validator(mode="after")
     def _normalize_database_url(self):

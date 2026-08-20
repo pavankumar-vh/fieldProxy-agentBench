@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from app.database import SessionLocal
-from app.models import TestCase
+from app.models import AgentVersion, TestCase
 from app.services.gemini import GeminiAgent, ProviderNotConfigured
 from app.services.world import build_world, resolve_tree
 
@@ -209,3 +209,31 @@ def test_langgraph_version_without_key_records_errors(client):
     detail = client.get(f"/runs/{res.json()['run_id']}").json()
     assert detail["passed"] == 0
     assert "GEMINI_API_KEY" in detail["error"]
+
+
+def test_sync_models_repairs_stale_llm_model_ids():
+    """Google retires model IDs; boot-time sync must repair them."""
+    from app.config import get_settings
+    from scripts import sync_models
+
+    db = SessionLocal()
+    try:
+        av = db.get(AgentVersion, "av_004")
+        av.model = "gemini-0.0-retired"
+        # Sentinel on a policy version: the sync must NOT touch it.
+        policy_av = db.get(AgentVersion, "av_001")
+        policy_av.model = "policy-engine"
+        db.commit()
+    finally:
+        db.close()
+
+    sync_models.main()
+
+    db = SessionLocal()
+    try:
+        av = db.get(AgentVersion, "av_004")
+        assert av.model == get_settings().gemini_model
+        policy_av = db.get(AgentVersion, "av_001")
+        assert policy_av.model == "policy-engine"
+    finally:
+        db.close()

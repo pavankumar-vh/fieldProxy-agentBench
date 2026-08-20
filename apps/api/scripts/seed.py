@@ -34,7 +34,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_003",
         "version": "v1.0",
-        "model": "gemini-1.5-pro",
+        "model": "gemini-3.5-flash",
         "status": "deprecated",
         "description": (
             "Initial prototype. Skips certification-expiry, inventory and "
@@ -49,7 +49,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_002",
         "version": "v1.1",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-3.5-flash",
         "status": "deprecated",
         "description": (
             "Stable version with full enforcement of certification, "
@@ -60,7 +60,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_001",
         "version": "v1.2",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-3.5-flash",
         "status": "active",
         "description": (
             "Latest version. Introduced regressions: skips technician-ID "
@@ -76,7 +76,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_004",
         "version": "v2.0-llm",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-3.5-flash",
         "status": "draft",
         "engine": "gemini",
         "description": (
@@ -89,7 +89,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_005",
         "version": "v2.1-graph",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-3.5-flash",
         "status": "draft",
         "engine": "langgraph",
         "description": (
