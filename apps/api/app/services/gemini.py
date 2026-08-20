@@ -11,6 +11,7 @@ deterministic evaluator grades LLM and policy runs alike.
 """
 
 import json
+import time
 from datetime import datetime
 
 import httpx
@@ -133,6 +134,9 @@ no prose) of exactly this shape:
 
 VALID_ACTIONS = {"assign", "reject", "defer", "escalate", "propose_slot"}
 MAX_TOOL_ROUNDS = 8
+# Google's free tier intermittently returns these; retry with backoff.
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+MAX_RETRIES = 3
 
 
 class GeminiAgent(DispatchAgent):
@@ -147,7 +151,7 @@ class GeminiAgent(DispatchAgent):
         api_key: str,
         base_url: str,
         model: str,
-        timeout: float = 30.0,
+        timeout: float = 60.0,
     ):
         # Empty policy: the LLM decides — no deterministic gates apply.
         super().__init__(world, {}, now)
@@ -175,12 +179,18 @@ class GeminiAgent(DispatchAgent):
             "tools": [{"function_declarations": TOOL_DECLARATIONS}],
             "generationConfig": {"temperature": 0.0},
         }
-        resp = httpx.post(
-            url,
-            json=payload,
-            headers={"x-goog-api-key": self.api_key},
-            timeout=self.timeout,
-        )
+        resp = None
+        for attempt in range(MAX_RETRIES):
+            resp = httpx.post(
+                url,
+                json=payload,
+                headers={"x-goog-api-key": self.api_key},
+                timeout=self.timeout,
+            )
+            if resp.status_code not in RETRYABLE_STATUS:
+                break
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(2 * (attempt + 1))
         resp.raise_for_status()
         return resp.json()
 

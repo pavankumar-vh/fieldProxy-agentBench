@@ -211,6 +211,69 @@ def test_langgraph_version_without_key_records_errors(client):
     assert "GEMINI_API_KEY" in detail["error"]
 
 
+def test_retries_transient_503_from_google():
+    """A 503 on the first attempt must not abort the case — retry it."""
+    calls = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            calls.append(1)
+            if len(calls) == 1:
+                self.send_response(503)
+                self.end_headers()
+                return
+            response = {
+                "candidates": [
+                    {
+                        "content": {
+                            "role": "model",
+                            "parts": [
+                                {
+                                    "text": json.dumps(
+                                        {
+                                            "action": "escalate",
+                                            "technician_id": None,
+                                            "scheduled_at": None,
+                                            "reason": "after retry",
+                                        }
+                                    )
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+            payload = json.dumps(response).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, *_):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        world, request, ref = _case_inputs("tc_001")
+        agent = GeminiAgent(
+            world,
+            {},
+            ref,
+            api_key="k",
+            base_url=f"http://127.0.0.1:{server.server_address[1]}",
+            model="m",
+        )
+        decision = agent.run(request)
+    finally:
+        server.shutdown()
+
+    assert decision["action"] == "escalate"
+    assert len(calls) == 2  # one failed attempt + one successful retry
+
+
 def test_sync_models_repairs_stale_llm_model_ids():
     """Google retires model IDs; boot-time sync must repair them."""
     from app.config import get_settings
