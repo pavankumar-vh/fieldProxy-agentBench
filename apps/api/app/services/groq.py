@@ -237,7 +237,14 @@ class GroqAgent(DispatchAgent):
             tool_calls = message.get("tool_calls") or []
 
             if not tool_calls:
-                decision = self._parse_decision(message.get("content") or "")
+                content = message.get("content") or ""
+                if not content.strip():
+                    # Lite models occasionally end with empty output — nudge
+                    # once more instead of failing the case outright.
+                    messages.append({"role": "assistant", "content": ""})
+                    messages.append({"role": "user", "content": REPAIR_NUDGE})
+                    continue
+                decision = self._parse_decision(content)
                 break
 
             messages.append(
