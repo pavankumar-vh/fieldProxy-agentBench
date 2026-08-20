@@ -8,6 +8,7 @@ Run from apps/api:  python -m scripts.seed
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 
 from app.database import SessionLocal
@@ -23,7 +24,8 @@ from app.models import (
 )
 from app.services.runner import execute_run, new_id
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+# Overridable so container images can place scenarios anywhere.
+REPO_ROOT = Path(os.environ.get("AGENTBENCH_REPO_ROOT") or Path(__file__).resolve().parents[3])
 WORLD_PATH = REPO_ROOT / "scenarios" / "fixtures" / "world.json"
 CASES_PATH = REPO_ROOT / "scenarios" / "dispatch" / "test_cases.json"
 
@@ -197,6 +199,12 @@ def run_benchmark(
 def main() -> None:
     db = SessionLocal()
     try:
+        # Container boot mode: never wipe a persisted database, only seed
+        # a fresh one (e.g. Render Postgres on first start).
+        if "--if-empty" in sys.argv and db.query(TestCase).count() > 0:
+            print("→ Database already seeded — skipping.")
+            return
+
         print("→ Wiping existing data…")
         wipe(db)
         print("→ Seeding world (technicians, inventory, appointments)…")

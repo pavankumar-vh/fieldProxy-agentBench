@@ -1,0 +1,27 @@
+# Render Blueprint — deploy via render.com → New → Blueprint.
+# Creates the API web service (Docker) + a free Postgres database,
+# wires DATABASE_URL automatically, and seeds real benchmark data on
+# first boot.
+services:
+  - type: web
+    name: agentbench-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agentbench-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: http://localhost:3000,https://web-seven-swart-11.vercel.app
+      # Optional: add a Gemini key in the Render dashboard to run the
+      # two LLM agent versions for real (free: aistudio.google.com).
+      - key: GEMINI_API_KEY
+        sync: false
+
+databases:
+  - name: agentbench-db
+    plan: free

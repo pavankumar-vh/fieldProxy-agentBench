@@ -53,3 +53,5 @@ npm-debug.log*
 credentials.json
 service-account.json
 screenshot*.png
+.vercel-tmp/
+apps/web/.vercel/
