@@ -102,7 +102,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_006",
         "version": "v3.0-groq",
-        "model": "openai/gpt-oss-120b",
+        "model": "openai/gpt-oss-20b",
         "status": "draft",
         "engine": "groq",
         "description": (

@@ -25,6 +25,13 @@ from app.services.gemini import (
 
 MAX_TOOL_ROUNDS = 8
 
+# Smaller open models occasionally emit unparseable output; a corrective
+# nudge round usually recovers without failing the case.
+REPAIR_NUDGE = (
+    "Your previous output could not be parsed. Respond ONLY by calling the "
+    "submit_decision function — no prose, no markdown, no JSON in content."
+)
+
 # Official exit path: models sometimes try to emit their final answer via an
 # invented tool (e.g. "json"), which Groq rejects. Giving them a declared
 # submit_decision function makes the terminal step deterministic.
@@ -125,10 +132,14 @@ class GroqAgent(DispatchAgent):
                 indent=1,
                 default=dt,
             )
-            + "\n\nUse the tools to verify facts, then return the final JSON decision."
+            + "\n\nUse the tools to verify facts. For your final answer call "
+            "submit_decision — never print JSON or prose as the final answer."
         )
 
     def _call_groq(self, messages: list[dict]) -> dict:
+        return self._post_chat(messages)
+
+    def _post_chat(self, messages: list[dict], repaired: bool = False) -> dict:
         resp = None
         for attempt in range(MAX_RETRIES):
             resp = httpx.post(
@@ -148,6 +159,12 @@ class GroqAgent(DispatchAgent):
             if attempt < MAX_RETRIES - 1:
                 wait = 15 * (attempt + 1) if resp.status_code == 429 else 2 * (attempt + 1)
                 time.sleep(wait)
+        if resp.status_code == 400 and not repaired:
+            # Unparseable model output — one corrective retry.
+            return self._post_chat(
+                [*messages, {"role": "user", "content": REPAIR_NUDGE}],
+                repaired=True,
+            )
         if resp.status_code >= 400:
             raise RuntimeError(f"Groq error {resp.status_code}: {resp.text[:400]}")
         return resp.json()
