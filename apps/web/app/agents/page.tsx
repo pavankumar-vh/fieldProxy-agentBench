@@ -47,7 +47,9 @@ export default async function AgentsPage() {
                   ? "LLM · Gemini"
                   : agent.engine === "langgraph"
                     ? "LLM · LangGraph"
-                    : "Rules",
+                    : agent.engine === "groq"
+                      ? "LLM · Groq"
+                      : "Rules",
             },
             { label: "MODEL", value: agent.model },
             { label: "PROMPT HASH", value: agent.prompt_hash },

@@ -10,11 +10,12 @@ def test_agents_listed_with_derived_stats(client):
     res = client.get("/agents")
     assert res.status_code == 200
     agents = res.json()
-    assert len(agents) == 5
+    assert len(agents) == 6
     by_id = {a["id"]: a for a in agents}
     assert by_id["av_001"]["status"] == "active"
     assert by_id["av_004"]["engine"] == "gemini"
     assert by_id["av_005"]["engine"] == "langgraph"
+    assert by_id["av_006"]["engine"] == "groq"
     # No runs yet for this version in a fresh test DB → zeroed stats.
     assert "pass_rate" in by_id["av_001"]
 

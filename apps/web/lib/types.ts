@@ -19,7 +19,7 @@ export interface AgentVersion {
   name: string;
   version: string;
   model: string;
-  engine?: "policy" | "gemini" | "langgraph";
+  engine?: "policy" | "gemini" | "langgraph" | "groq";
   prompt_hash: string;
   pass_rate: number;
   total_tests: number;

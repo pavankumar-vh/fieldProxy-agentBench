@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
     gemini_model: str = "gemini-3.5-flash"
 
+    # Groq provider (OpenAI-compatible, fast free tier: console.groq.com).
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "openai/gpt-oss-120b"
+
     @model_validator(mode="after")
     def _normalize_database_url(self):
         # Render (and some hosts) hand out postgres:// URLs; SQLAlchemy

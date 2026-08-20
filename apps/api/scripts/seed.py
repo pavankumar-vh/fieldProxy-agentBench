@@ -99,6 +99,19 @@ AGENT_VERSIONS = [
         ),
         "policy": {},
     },
+    {
+        "id": "av_006",
+        "version": "v3.0-groq",
+        "model": "openai/gpt-oss-120b",
+        "status": "draft",
+        "engine": "groq",
+        "description": (
+            "Groq engine: OpenAI-compatible tool loop on Groq's fast free "
+            "tier. Same six tools, same deterministic grading as every "
+            "other engine. Requires GROQ_API_KEY."
+        ),
+        "policy": {},
+    },
 ]
 
 

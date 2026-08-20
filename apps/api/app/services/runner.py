@@ -19,6 +19,7 @@ from app.models import (
 from app.services.agent import DispatchAgent
 from app.services.evaluator import evaluate
 from app.services.gemini import GeminiAgent
+from app.services.groq import GroqAgent
 from app.services.langgraph_agent import LangGraphAgent
 from app.services.world import build_world, resolve_tree
 
@@ -31,9 +32,19 @@ def new_id(prefix: str) -> str:
 
 def make_agent(agent_version: AgentVersion, world: dict, ref: datetime):
     """Instantiate the right engine for this agent version."""
-    if agent_version.engine in ("gemini", "langgraph"):
+    engine = agent_version.engine
+    if engine in ("gemini", "langgraph", "groq"):
         settings = get_settings()
-        cls = LangGraphAgent if agent_version.engine == "langgraph" else GeminiAgent
+        if engine == "groq":
+            return GroqAgent(
+                world,
+                agent_version.policy,
+                ref,
+                api_key=settings.groq_api_key,
+                base_url=settings.groq_base_url,
+                model=agent_version.model,
+            )
+        cls = LangGraphAgent if engine == "langgraph" else GeminiAgent
         return cls(
             world,
             agent_version.policy,

@@ -74,7 +74,7 @@ def start_benchmark(
     db.add(run)
     db.commit()
 
-    if agent_version.engine in ("gemini", "langgraph"):
+    if agent_version.engine in ("gemini", "langgraph", "groq"):
         # LLM benchmarks take minutes (rate-limited Gemini round-trips).
         # Respond immediately and execute after the response.
         background_tasks.add_task(_execute_in_background, run.id)

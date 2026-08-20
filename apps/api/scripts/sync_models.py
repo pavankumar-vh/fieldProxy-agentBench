@@ -12,7 +12,8 @@ from app.config import get_settings
 from app.database import SessionLocal
 from app.models import AgentVersion
 
-LLM_ENGINES = ("gemini", "langgraph")
+# engine → which configured model it should track.
+LLM_ENGINES = ("gemini", "langgraph", "groq")
 
 
 def main() -> None:
@@ -26,12 +27,15 @@ def main() -> None:
             .all()
         )
         for av in versions:
-            if av.model != settings.gemini_model:
-                print(f"  {av.id} ({av.version}): {av.model} → {settings.gemini_model}")
-                av.model = settings.gemini_model
+            target = (
+                settings.groq_model if av.engine == "groq" else settings.gemini_model
+            )
+            if av.model != target:
+                print(f"  {av.id} ({av.version}): {av.model} → {target}")
+                av.model = target
                 updated += 1
         db.commit()
-        print(f"→ LLM agent models synced to {settings.gemini_model} ({updated} updated)")
+        print(f"→ LLM agent models synced ({updated} updated)")
     finally:
         db.close()
 
