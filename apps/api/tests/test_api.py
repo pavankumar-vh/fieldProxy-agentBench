@@ -107,6 +107,33 @@ def test_run_can_be_deleted(client):
     assert client.delete(f"/runs/{run_id}").status_code == 404
 
 
+def test_concurrent_benchmark_rejected(client):
+    """Only one benchmark may run at a time (free-tier LLM quota)."""
+    from app.database import SessionLocal
+    from app.models import BenchmarkRun
+
+    db = SessionLocal()
+    blocker = BenchmarkRun(
+        id="run_blocker",
+        agent_version_id="av_002",
+        status="running",
+        benchmark_type="full",
+        triggered_by="test",
+    )
+    db.add(blocker)
+    db.commit()
+    db.close()
+    try:
+        res = client.post("/benchmark/run", json={"agent_version_id": "av_002"})
+        assert res.status_code == 409
+        assert "already running" in res.json()["detail"]
+    finally:
+        db = SessionLocal()
+        db.delete(db.get(BenchmarkRun, "run_blocker"))
+        db.commit()
+        db.close()
+
+
 def test_invalid_benchmark_type_rejected(client):
     res = client.post(
         "/benchmark/run",

@@ -2,6 +2,7 @@ import { getRunDetail, ApiError } from "@/lib/api";
 import { formatPercent, formatDateTime, formatLatency, formatDuration, severityColor, statusBadge } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
+import RunAutoRefresh from "@/components/RunAutoRefresh";
 
 export const metadata: Metadata = {
   title: "Run Detail — Fieldproxy AgentBench",
@@ -78,6 +79,23 @@ export default async function RunDetailPage({
 
   return (
     <div className="page">
+      <RunAutoRefresh status={run.status} />
+      {(run.status === "queued" || run.status === "running") && (
+        <div
+          className="card-yellow"
+          style={{
+            padding: "1rem 1.5rem",
+            marginBottom: "1.5rem",
+            fontFamily: "var(--font-space-mono), monospace",
+            fontSize: "0.8rem",
+            letterSpacing: "0.05em",
+          }}
+        >
+          ⏳ RUN IN PROGRESS — the agent is executing real cases against the
+          world. LLM benchmarks take minutes on the free tier; this page
+          refreshes automatically.
+        </div>
+      )}
       {/* Breadcrumb */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
         <Link href="/runs" className="label-mono" style={{ color: "var(--gray-500)", textDecoration: "none" }}>
