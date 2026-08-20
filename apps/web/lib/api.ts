@@ -34,17 +34,21 @@ export class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  options?: RequestInit,
+  timeoutMs: number = REQUEST_TIMEOUT_MS
+): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
       headers: { "Content-Type": "application/json" },
       ...options,
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      throw new ApiError(`API ${path} → TIMEOUT AFTER ${REQUEST_TIMEOUT_MS / 1000}S`, 0);
+      throw new ApiError(`API ${path} → TIMEOUT AFTER ${timeoutMs / 1000}S`, 0);
     }
     throw new ApiError(`API ${path} → NETWORK ERROR`, 0);
   }
@@ -134,10 +138,13 @@ export async function startBenchmark(
     // Simulate a run ID during Phase 1
     return { run_id: "run_001" };
   }
-  return apiFetch<{ run_id: string }>("/benchmark/run", {
-    method: "POST",
-    body: JSON.stringify(req),
-  });
+  // Runs execute inline on the server; LLM benchmarks make dozens of real
+  // Gemini round-trips and can take minutes — give the call 10 minutes.
+  return apiFetch<{ run_id: string }>(
+    "/benchmark/run",
+    { method: "POST", body: JSON.stringify(req) },
+    10 * 60 * 1000
+  );
 }
 
 // ── Regression ─────────────────────────────────────────────

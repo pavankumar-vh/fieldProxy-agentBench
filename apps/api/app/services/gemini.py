@@ -136,7 +136,7 @@ VALID_ACTIONS = {"assign", "reject", "defer", "escalate", "propose_slot"}
 MAX_TOOL_ROUNDS = 8
 # Google's free tier intermittently returns these; retry with backoff.
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
-MAX_RETRIES = 3
+MAX_RETRIES = 4
 
 
 class GeminiAgent(DispatchAgent):
@@ -190,7 +190,9 @@ class GeminiAgent(DispatchAgent):
             if resp.status_code not in RETRYABLE_STATUS:
                 break
             if attempt < MAX_RETRIES - 1:
-                time.sleep(2 * (attempt + 1))
+                # 429 is a per-minute quota — wait much longer than for 5xx.
+                wait = 15 * (attempt + 1) if resp.status_code == 429 else 2 * (attempt + 1)
+                time.sleep(wait)
         resp.raise_for_status()
         return resp.json()
 

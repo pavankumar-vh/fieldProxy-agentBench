@@ -96,6 +96,17 @@ def test_unknown_run_404(client):
     assert client.get("/runs/run_nope").status_code == 404
 
 
+def test_run_can_be_deleted(client):
+    res = client.post(
+        "/benchmark/run",
+        json={"agent_version_id": "av_002", "benchmark_type": "critical"},
+    )
+    run_id = res.json()["run_id"]
+    assert client.delete(f"/runs/{run_id}").status_code == 204
+    assert client.get(f"/runs/{run_id}").status_code == 404
+    assert client.delete(f"/runs/{run_id}").status_code == 404
+
+
 def test_invalid_benchmark_type_rejected(client):
     res = client.post(
         "/benchmark/run",
