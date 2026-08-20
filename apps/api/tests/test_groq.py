@@ -106,3 +106,27 @@ def test_tool_loop_over_real_http_openai_format():
     types = [s["type"] for s in agent.steps]
     assert types[0] == "intent_parsing"
     assert "llm_call" in types and "tool_call" in types and types[-1] == "decision"
+
+
+def test_boot_sync_restores_missing_registry_versions():
+    """Versions introduced after first deploy must appear on next boot."""
+    from app.database import SessionLocal
+    from app.models import AgentVersion
+    from scripts import sync_models
+
+    db = SessionLocal()
+    try:
+        db.delete(db.get(AgentVersion, "av_006"))
+        db.commit()
+    finally:
+        db.close()
+
+    sync_models.main()
+
+    db = SessionLocal()
+    try:
+        av = db.get(AgentVersion, "av_006")
+        assert av is not None
+        assert av.engine == "groq"
+    finally:
+        db.close()

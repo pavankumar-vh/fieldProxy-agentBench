@@ -192,6 +192,32 @@ def seed_agent_versions(db) -> None:
     db.commit()
 
 
+def ensure_agent_versions(db) -> None:
+    """Idempotently register versions added after first deploy. Never touches
+    existing rows or run data — safe to run on every container boot."""
+    existing = {av.id for av in db.query(AgentVersion).all()}
+    added = 0
+    for av in AGENT_VERSIONS:
+        if av["id"] in existing:
+            continue
+        db.add(
+            AgentVersion(
+                id=av["id"],
+                name="Dispatch Agent",
+                version=av["version"],
+                model=av["model"],
+                prompt_hash=policy_hash(av["policy"]),
+                policy=av["policy"],
+                engine=av.get("engine", "policy"),
+                status=av["status"],
+                description=av["description"],
+            )
+        )
+        added += 1
+    db.commit()
+    print(f"→ Agent registry synced ({added} new version(s) added)")
+
+
 def run_benchmark(
     db, agent_version_id: str, compare_against: str | None = None
 ) -> BenchmarkRun:

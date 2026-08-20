@@ -20,6 +20,11 @@ def main() -> None:
     settings = get_settings()
     db = SessionLocal()
     try:
+        # Register versions introduced after the database was first seeded.
+        from scripts.seed import ensure_agent_versions
+
+        ensure_agent_versions(db)
+
         updated = 0
         versions = (
             db.query(AgentVersion)
