@@ -37,8 +37,9 @@ AGENT_VERSIONS = [
         "model": "gemini-3.5-flash",
         "status": "deprecated",
         "description": (
-            "Initial prototype. Skips certification-expiry, inventory and "
-            "schedule enforcement — multiple critical edge-case failures."
+            "Initial prototype — skips certification-expiry, inventory and "
+            "schedule enforcement. Scores 46.2% on the full suite and fails "
+            "most edge cases."
         ),
         "policy": {
             "enforce_cert_expiry": False,
@@ -52,8 +53,9 @@ AGENT_VERSIONS = [
         "model": "gemini-3.5-flash",
         "status": "deprecated",
         "description": (
-            "Stable version with full enforcement of certification, "
-            "inventory, schedule, working-hours and SLA rules."
+            "Stable baseline — full enforcement of certification, inventory, "
+            "schedule, working-hours and SLA rules. Scores 100% on the full "
+            "suite; used as the regression baseline."
         ),
         "policy": {},
     },
@@ -63,9 +65,9 @@ AGENT_VERSIONS = [
         "model": "gemini-3.5-flash",
         "status": "active",
         "description": (
-            "Latest version. Introduced regressions: skips technician-ID "
-            "validation, ignores certification expiry, and no longer "
-            "escalates SLA breaches."
+            "Current active release — removed technician-ID validation, "
+            "certification-expiry checks and SLA escalation. Regressed to "
+            "61.5% vs the v1.1 baseline."
         ),
         "policy": {
             "validate_technician_id": False,
@@ -80,9 +82,9 @@ AGENT_VERSIONS = [
         "status": "draft",
         "engine": "gemini",
         "description": (
-            "Real LLM agent: Gemini function-calling loop over the same six "
-            "tools. Requires GEMINI_API_KEY — without it, cases report an "
-            "honest error instead of a fake result."
+            "Gemini engine — real LLM function-calling loop over the same "
+            "six tools (gemini-3.5-flash). Requires GEMINI_API_KEY; without "
+            "it, cases report an honest error instead of a fake result."
         ),
         "policy": {},
     },
@@ -93,9 +95,9 @@ AGENT_VERSIONS = [
         "status": "draft",
         "engine": "langgraph",
         "description": (
-            "Phase 3: the same Gemini tool loop expressed as an explicit "
-            "LangGraph state machine (model → tools → model). Same tools, "
-            "same grading — comparable traces across engines."
+            "LangGraph engine — the same Gemini tool loop expressed as an "
+            "explicit state machine (model → tools → model), identical "
+            "traces and grading. Requires GEMINI_API_KEY."
         ),
         "policy": {},
     },
@@ -106,9 +108,9 @@ AGENT_VERSIONS = [
         "status": "draft",
         "engine": "groq",
         "description": (
-            "Groq engine: OpenAI-compatible tool loop on Groq's fast free "
-            "tier. Same six tools, same deterministic grading as every "
-            "other engine. Requires GROQ_API_KEY."
+            "Groq engine — the fastest LLM option (openai/gpt-oss-20b), "
+            "~20-30s per case. Same six tools, same deterministic grading "
+            "as every other engine. Requires GROQ_API_KEY."
         ),
         "policy": {},
     },
@@ -193,29 +195,36 @@ def seed_agent_versions(db) -> None:
 
 
 def ensure_agent_versions(db) -> None:
-    """Idempotently register versions added after first deploy. Never touches
-    existing rows or run data — safe to run on every container boot."""
-    existing = {av.id for av in db.query(AgentVersion).all()}
-    added = 0
+    """Keep the registry in sync with the seed definitions on every boot.
+    Inserts versions added after first deploy and refreshes the description,
+    status and engine of existing rows — never touches run data."""
+    existing = {av.id: av for av in db.query(AgentVersion).all()}
+    changed = 0
     for av in AGENT_VERSIONS:
-        if av["id"] in existing:
-            continue
-        db.add(
-            AgentVersion(
-                id=av["id"],
-                name="Dispatch Agent",
-                version=av["version"],
-                model=av["model"],
-                prompt_hash=policy_hash(av["policy"]),
-                policy=av["policy"],
-                engine=av.get("engine", "policy"),
-                status=av["status"],
-                description=av["description"],
+        row = existing.get(av["id"])
+        if row is None:
+            db.add(
+                AgentVersion(
+                    id=av["id"],
+                    name="Dispatch Agent",
+                    version=av["version"],
+                    model=av["model"],
+                    prompt_hash=policy_hash(av["policy"]),
+                    policy=av["policy"],
+                    engine=av.get("engine", "policy"),
+                    status=av["status"],
+                    description=av["description"],
+                )
             )
-        )
-        added += 1
+            changed += 1
+            continue
+        for field in ("description", "status", "engine"):
+            value = av.get(field, "policy") if field == "engine" else av[field]
+            if getattr(row, field) != value:
+                setattr(row, field, value)
+                changed += 1
     db.commit()
-    print(f"→ Agent registry synced ({added} new version(s) added)")
+    print(f"→ Agent registry synced ({changed} field(s) updated)")
 
 
 def run_benchmark(
