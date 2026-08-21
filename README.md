@@ -1,7 +1,12 @@
 # FieldProxy AgentBench
 
-Regression-testing platform for AI dispatch agents. Real execution,
-deterministic grading, honest numbers — nothing is simulated.
+FieldProxy AgentBench is a comprehensive regression-testing platform designed for evaluating and benchmarking AI dispatch agents. It provides a real execution environment with deterministic grading to ensure honest and accurate performance metrics—nothing is simulated.
+
+### What the Application Does
+- **Benchmarking AI Agents**: Evaluates different versions of AI agents (e.g., rule-based policy, Gemini REST LLM, LangGraph) against a standardized set of test scenarios.
+- **Scenario Testing**: Runs agents through 13 predefined scenarios and a world fixture to assess their decision-making and dispatch capabilities.
+- **Performance Visualization**: Includes a Next.js-based web dashboard to view benchmark runs, compare agent versions, and analyze success rates and failure points.
+- **Real Execution Engine**: Powered by a FastAPI backend and PostgreSQL database, it executes agents in real-time, persisting execution logs, agent thoughts, and outcomes for detailed review.
 
 ## Stack
 
