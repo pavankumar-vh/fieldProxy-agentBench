@@ -239,7 +239,7 @@ export default async function RunDetailPage({
               >
                 {idx + 1}
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
                   <span style={{ fontSize: "1rem" }}>{STEP_ICONS[step.type] ?? "◆"}</span>
                   <span style={{ fontWeight: 700, fontFamily: "var(--font-space-mono), monospace", fontSize: "0.85rem" }}>
@@ -260,6 +260,7 @@ export default async function RunDetailPage({
                       fontSize: "0.72rem",
                       fontFamily: "var(--font-space-mono), monospace",
                       overflowX: "auto",
+                      maxWidth: "100%",
                       marginTop: "0.4rem",
                       color: "var(--gray-700)",
                     }}
@@ -353,6 +354,7 @@ export default async function RunDetailPage({
                 fontSize: "0.85rem",
                 lineHeight: 1.7,
                 color: "var(--green)",
+                overflowX: "auto",
               }}
             >
               {JSON.stringify(run.agent_decision, null, 2)}
