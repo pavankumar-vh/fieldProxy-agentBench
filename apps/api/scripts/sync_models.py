@@ -18,23 +18,30 @@ LLM_ENGINES = ("gemini", "langgraph", "groq")
 
 def main() -> None:
     settings = get_settings()
+    # Policy versions never call an LLM — their model label comes from the
+    # seed definitions and is kept honest by this sync.
+    from scripts.seed import AGENT_VERSIONS, ensure_agent_versions
+
+    seed_model = {av["id"]: av["model"] for av in AGENT_VERSIONS}
+
     db = SessionLocal()
     try:
         # Register versions introduced after the database was first seeded.
-        from scripts.seed import ensure_agent_versions
-
         ensure_agent_versions(db)
 
         updated = 0
         versions = (
             db.query(AgentVersion)
-            .filter(AgentVersion.engine.in_(LLM_ENGINES))
+            .filter(AgentVersion.engine.in_(LLM_ENGINES + ("policy",)))
             .all()
         )
         for av in versions:
-            target = (
-                settings.groq_model if av.engine == "groq" else settings.gemini_model
-            )
+            if av.engine == "groq":
+                target = settings.groq_model
+            elif av.engine in ("gemini", "langgraph"):
+                target = settings.gemini_model
+            else:
+                target = seed_model.get(av.id, av.model)
             if av.model != target:
                 print(f"  {av.id} ({av.version}): {av.model} → {target}")
                 av.model = target

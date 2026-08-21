@@ -34,7 +34,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_003",
         "version": "v1.0",
-        "model": "gemini-3.5-flash",
+        "model": "rules-engine",
         "status": "deprecated",
         "description": (
             "Initial prototype — skips certification-expiry, inventory and "
@@ -50,7 +50,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_002",
         "version": "v1.1",
-        "model": "gemini-3.5-flash",
+        "model": "rules-engine",
         "status": "deprecated",
         "description": (
             "Stable baseline — full enforcement of certification, inventory, "
@@ -62,7 +62,7 @@ AGENT_VERSIONS = [
     {
         "id": "av_001",
         "version": "v1.2",
-        "model": "gemini-3.5-flash",
+        "model": "rules-engine",
         "status": "active",
         "description": (
             "Current active release — removed technician-ID validation, "

@@ -283,9 +283,10 @@ def test_sync_models_repairs_stale_llm_model_ids():
     try:
         av = db.get(AgentVersion, "av_004")
         av.model = "gemini-0.0-retired"
-        # Sentinel on a policy version: the sync must NOT touch it.
+        # Stale label on a policy version: sync must correct it to the
+        # honest seed value (policy versions never call an LLM).
         policy_av = db.get(AgentVersion, "av_001")
-        policy_av.model = "policy-engine"
+        policy_av.model = "gemini-2.0-flash"
         db.commit()
     finally:
         db.close()
@@ -297,6 +298,6 @@ def test_sync_models_repairs_stale_llm_model_ids():
         av = db.get(AgentVersion, "av_004")
         assert av.model == get_settings().gemini_model
         policy_av = db.get(AgentVersion, "av_001")
-        assert policy_av.model == "policy-engine"
+        assert policy_av.model == "rules-engine"
     finally:
         db.close()
